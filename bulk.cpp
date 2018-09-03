@@ -109,13 +109,7 @@ void BulkStorage::set_timestamp(const std::size_t &id, const std::size_t &stamp)
 }
 void ToConsolePrint::printOut(BulkReadCmd &source, const std::size_t &id)
 {
-    if (source.get_commands(id).size())
-    {
-        _out << "bulk: ";
-        std::copy(std::cbegin(source.get_commands(id)), std::cend(source.get_commands(id)),
-                  infix_ostream_iterator<std::string>(_out, ", "));
-        _out << std::endl;
-    }
+    printOstream(_out,source, id);
 }
 
 void ToFilePrint::printOut(BulkReadCmd &source, const std::size_t &id)
@@ -131,14 +125,7 @@ void ToFilePrint::printOut(BulkReadCmd &source, const std::size_t &id)
     try
     {
         ofs.open(fName, std::ofstream::out | std::ofstream::trunc);
-
-        if (source.get_commands(id).size())
-        {
-            ofs << "bulk: ";
-            std::copy(std::cbegin(source.get_commands(id)), std::cend(source.get_commands(id)),
-                      infix_ostream_iterator<std::string>(ofs, ", "));
-            ofs << std::endl;
-        }
+        printOstream(ofs,source, id);
         ofs.close();
     }
     catch (std::ofstream::failure e)

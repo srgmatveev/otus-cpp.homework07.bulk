@@ -46,6 +46,16 @@ template <typename T>
 struct Observer
 {
   virtual void printOut(T &source, const std::size_t &) = 0;
+  protected:
+  virtual void printOstream(std::ostream& out, T &source , const std::size_t & id){
+    if (source.get_commands(id).size())
+        {
+            out << "bulk: ";
+            std::copy(std::cbegin(source.get_commands(id)), std::cend(source.get_commands(id)),
+                      infix_ostream_iterator<std::string>(out, ", "));
+            out << std::endl;
+        }
+  }
 };
 
 class ToConsolePrint : public Observer<BulkReadCmd>
