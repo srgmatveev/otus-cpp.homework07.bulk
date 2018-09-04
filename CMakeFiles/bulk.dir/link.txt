@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/bulk.dir/main.cpp.o CMakeFiles/bulk.dir/bulk.cpp.o  -o bulk 
