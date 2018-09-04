@@ -1,0 +1,5 @@
+/home/sergio/Work/vscode/otus/homework07/bulk/CMakeFiles/rebuild_cache.dir
+/home/sergio/Work/vscode/otus/homework07/bulk/CMakeFiles/edit_cache.dir
+/home/sergio/Work/vscode/otus/homework07/bulk/CMakeFiles/bulk.dir
+/home/sergio/Work/vscode/otus/homework07/bulk/CMakeFiles/package_source.dir
+/home/sergio/Work/vscode/otus/homework07/bulk/CMakeFiles/package.dir
