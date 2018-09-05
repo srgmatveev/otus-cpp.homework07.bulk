@@ -44,14 +44,12 @@ void BulkReadCmd::append(const std::string &tmp)
     else if (tmp == "}")
     {
 
-        --open_braces_count;
-        if (open_braces_count < 0)
+        if (!open_braces_count)
         {
-            open_braces_count = 0;
             if (_current_numb_of_cell > 0)
                 push();
         }
-        else if (!open_braces_count)
+        else if (!--open_braces_count)
         {
             push();
         }
@@ -99,7 +97,10 @@ void BulkStorage::appendToCmdStorage(const std::size_t &i, const std::string &st
 std::size_t BulkStorage::get_timestamp(const std::size_t &id)
 {
     auto it = _cmdStorage.find(id);
-    return it->second->timestamp;
+    if (it != _cmdStorage.cend())
+        return it->second->timestamp;
+    else
+        return 0;
 }
 void BulkStorage::set_timestamp(const std::size_t &id, const std::size_t &stamp)
 {
@@ -109,7 +110,7 @@ void BulkStorage::set_timestamp(const std::size_t &id, const std::size_t &stamp)
 }
 void ToConsolePrint::printOut(BulkReadCmd &source, const std::size_t &id)
 {
-    printOstream(_out,source, id);
+    printOstream(_out, source, id);
 }
 
 void ToFilePrint::printOut(BulkReadCmd &source, const std::size_t &id)
@@ -125,7 +126,7 @@ void ToFilePrint::printOut(BulkReadCmd &source, const std::size_t &id)
     try
     {
         ofs.open(fName, std::ofstream::out | std::ofstream::trunc);
-        printOstream(ofs,source, id);
+        printOstream(ofs, source, id);
         ofs.close();
     }
     catch (std::ofstream::failure e)
@@ -137,7 +138,10 @@ void ToFilePrint::printOut(BulkReadCmd &source, const std::size_t &id)
 std::vector<std::string> &BulkStorage::get_commands(const std::size_t &id)
 {
     auto it = _cmdStorage.find(id);
-    return it->second->get_cells();
+    if (it != _cmdStorage.cend())
+        return it->second->get_cells();
+    else
+        return false_cell;
 }
 
 void BulkStorage::deleteStorageCell(const std::size_t &id)

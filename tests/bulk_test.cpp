@@ -52,7 +52,6 @@ TEST_F(TestCommandsCollection, Test_Bulk_Append1)
     ASSERT_THAT(oss.str(), resultData);
 }
 
-
 TEST_F(TestCommandsCollection, Test_Bulk_Append2)
 {
     std::string testData{"cmd1\n"

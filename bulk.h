@@ -31,7 +31,7 @@ class BulkStorage
 {
 private:
   std::map<std::size_t, std::shared_ptr<BulkStorageCell>> _cmdStorage;
-
+  std::vector<std::string> false_cell{};
 public:
   BulkStorage() : _cmdStorage{} {};
   std::size_t create_bulk();
@@ -148,5 +148,5 @@ private:
   std::size_t _chunkSize{0};
   std::size_t _numb_of_current_chunk{0};
   std::size_t _current_numb_of_cell{0};
-  int open_braces_count{0};
+  std::size_t open_braces_count{0};
 };
