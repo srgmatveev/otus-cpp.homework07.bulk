@@ -7,7 +7,6 @@
 
 int main(int argc, char const *argv[])
 {
-    std::size_t chunk_size{0};
     try
     {
         if (argc != 2)
@@ -23,17 +22,12 @@ int main(int argc, char const *argv[])
             return 0;
         }
 
-        chunk_size = std::atoi(argv[1]);
+        std::size_t chunk_size = std::atoi(argv[1]);
 
         auto ptrBulkRead = BulkReadCmd::create(chunk_size);
         auto ptrToConsolePrint = ToConsolePrint::create(std::cout);
         auto ptrToFilePrint = ToFilePrint::create();
-
-        ptrBulkRead->subscribe(ptrToConsolePrint.get());
-        ptrBulkRead->subscribe(ptrToFilePrint.get());
         ptrBulkRead->process(std::cin);
-        ptrBulkRead->unsubscribe(ptrToFilePrint.get());
-        ptrBulkRead->unsubscribe(ptrToConsolePrint.get());
     }
     catch (std::exception &e)
     {

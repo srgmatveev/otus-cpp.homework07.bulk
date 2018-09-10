@@ -13,7 +13,7 @@ class TestCommandsCollection : public Test
     {
         ptrBulkRead = BulkReadCmd::create(chunk_size);
         ptrToConsolePrint = ToConsolePrint::create(oss);
-        ptrBulkRead->subscribe(ptrToConsolePrint.get());
+        ptrBulkRead->subscribe(ptrToConsolePrint);
     }
 };
 
@@ -32,6 +32,12 @@ TEST(Test_Bulk_Create_Case, Test_Bulk_Create)
     ASSERT_THAT(numb_of_chunk, 1);
 }
 
+TEST_F(TestCommandsCollection, Test_Observer_Storage)
+{
+    ptrToConsolePrint->subscribe_on_observable(ptrBulkRead);
+    ptrToConsolePrint->subscribe_on_observable(ptrBulkRead);
+}
+/*
 TEST_F(TestCommandsCollection, Test_Bulk_Append1)
 {
     std::string testData{"cmd1\n"
@@ -262,3 +268,4 @@ TEST_F(TestCommandsCollection, Test_Bulk_Append12)
     std::cout << oss.str() << std::endl;
     ASSERT_THAT(oss.str(), resultData);
 }
+*/

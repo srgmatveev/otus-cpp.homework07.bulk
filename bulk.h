@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <mutex>
 #include <ctime>
 #include <algorithm>
 #include <iostream>
@@ -32,6 +31,7 @@ class BulkStorage
 private:
   std::map<std::size_t, std::shared_ptr<BulkStorageCell>> _cmdStorage;
   std::vector<std::string> false_cell{};
+
 public:
   BulkStorage() : _cmdStorage{} {};
   std::size_t create_bulk();
@@ -42,27 +42,37 @@ public:
   void deleteStorageCell(const std::size_t &);
 };
 
-template <typename T>
-struct Observer
+struct Observable;
+class Observer : public std::enable_shared_from_this<Observer>
 {
-  virtual void printOut(T &source, const std::size_t &) = 0;
-  protected:
-  virtual void printOstream(std::ostream& out, T &source , const std::size_t & id){
+private:
+  std::vector<std::weak_ptr<Observable>> _observables;
+
+public:
+  Observer() =  default;
+  Observer(const std::weak_ptr<Observable> &);
+  virtual void update(BulkStorage &source, const std::size_t &) = 0;
+  void subscribe_on_observable(const std::weak_ptr<Observable> &);
+  void unsubscribe_on_observable(const std::weak_ptr<Observable> &);
+
+protected:
+  virtual void printOstream(std::ostream &out, BulkStorage &source, const std::size_t &id)
+  {
     if (source.get_commands(id).size())
-        {
-            out << "bulk: ";
-            std::copy(std::cbegin(source.get_commands(id)), std::cend(source.get_commands(id)),
-                      infix_ostream_iterator<std::string>(out, ", "));
-            out << std::endl;
-        }
+    {
+      out << "bulk: ";
+      std::copy(std::cbegin(source.get_commands(id)), std::cend(source.get_commands(id)),
+                infix_ostream_iterator<std::string>(out, ", "));
+      out << std::endl;
+    }
   }
 };
 
-class ToConsolePrint : public Observer<BulkReadCmd>
+class ToConsolePrint : public Observer
 {
 public:
-  ToConsolePrint(std::ostream &out) : Observer<BulkReadCmd>(), _out{out} {}
-  void printOut(BulkReadCmd &, const std::size_t &);
+  ToConsolePrint(std::ostream &out) : Observer(), _out{out} {}
+  void update(BulkStorage &, const std::size_t &);
   static std::shared_ptr<ToConsolePrint> create(std::ostream &out)
   {
     return std::make_shared<ToConsolePrint>(out);
@@ -72,10 +82,11 @@ private:
   std::ostream &_out;
 };
 
-class ToFilePrint : public Observer<BulkReadCmd>
+class ToFilePrint : public Observer
 {
 public:
-  void printOut(BulkReadCmd &source, const std::size_t &id);
+  ToFilePrint() : Observer() {}
+  void update(BulkStorage &, const std::size_t &id);
 
   static std::shared_ptr<ToFilePrint> create()
   {
@@ -83,48 +94,62 @@ public:
   }
 };
 
-template <typename T>
 struct Observable
 {
-  
-  void subscribe(Observer<T> *observer)
+
+  void subscribe(const std::weak_ptr<Observer> &observer_ptr)
   {
-    std::scoped_lock<std::mutex> lock{mtx};
-    if (!observer)
-      return;
-    auto it = std::find_if(observers.cbegin(), observers.cend(), [&](Observer<T> *e) { return e == observer; });
-    if (it == observers.cend())
-      observers.emplace_back(observer);
+    auto observer = observer_ptr.lock();
+
+    if (observer)
+    {
+      auto it = std::find_if(observers.cbegin(), observers.cend(), [&](std::weak_ptr<Observer> e) { return e.lock() == observer; });
+      if (it == observers.cend())
+        observers.emplace_back(observer);
+      observer.reset();
+    }
   }
-  void unsubscribe(Observer<T> *observer)
+  void unsubscribe(const std::weak_ptr<Observer> &observer_ptr)
   {
-    std::scoped_lock<std::mutex> lock{mtx};
-    observers.erase(
-        remove(observers.begin(), observers.end(), observer),
-        observers.end());
+    auto observer = observer_ptr.lock();
+    if (observer)
+    {
+      observers.erase(
+          std::remove_if(observers.begin(), observers.end(),
+                         [observer_ptr](const auto &p) { return !(observer_ptr.owner_before(p) || p.owner_before(observer_ptr)); }),
+          observers.end());
+
+      observer.reset();
+    }
   }
+
 protected:
-void notify(T &source, const std::size_t &id)
+  void notify(BulkStorage &source, const std::size_t &id)
   {
-    std::scoped_lock<std::mutex> lock{mtx};
-    for (auto obs : observers)
-      obs->printOut(source, id);
+    for (const auto &obs : observers)
+    {
+      if (auto ptr = obs.lock())
+      {
+        ptr->update(source, id);
+        ptr.reset();
+      }
+    }
   }
+
 private:
-  std::vector<Observer<T> *> observers;
-  std::mutex mtx;
+  std::vector<std::weak_ptr<Observer>> observers;
 };
 
-class BulkReadCmd : public Observable<BulkReadCmd>
+class BulkReadCmd : public Observable
 {
 public:
-  BulkReadCmd() : Observable<BulkReadCmd>(),
+  BulkReadCmd() : Observable(),
                   _chunkSize{1},
-                  _bulkStorage{new BulkStorage()} {}
+                  _bulkStorage{std::make_shared<BulkStorage>()} {}
 
-  BulkReadCmd(const std::size_t &chunkSize) : Observable<BulkReadCmd>(),
+  BulkReadCmd(const std::size_t &chunkSize) : Observable(),
                                               _chunkSize{chunkSize},
-                                              _bulkStorage{new BulkStorage()} {}
+                                              _bulkStorage{std::make_shared<BulkStorage>()} {}
 
   void process(std::istream &);
 
@@ -137,14 +162,9 @@ public:
   }
   std::vector<std::string> &get_commands(const std::size_t &id) { return _bulkStorage->get_commands(id); }
   std::size_t get_timestamp(const std::size_t &id) { return _bulkStorage->get_timestamp(id); }
-  virtual ~BulkReadCmd()
-  {
-    if (_bulkStorage)
-      delete _bulkStorage;
-  }
 
 private:
-  BulkStorage *_bulkStorage{nullptr};
+  std::shared_ptr<BulkStorage> _bulkStorage{nullptr};
   std::size_t _chunkSize{0};
   std::size_t _numb_of_current_chunk{0};
   std::size_t _current_numb_of_cell{0};

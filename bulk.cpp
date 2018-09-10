@@ -23,7 +23,7 @@ void BulkReadCmd::push()
                                std::chrono::system_clock::now().time_since_epoch())
                                .count();
     _bulkStorage->set_timestamp(_numb_of_current_chunk, tmp_time);
-    notify(*this, _numb_of_current_chunk);
+    notify(*_bulkStorage, _numb_of_current_chunk);
     _current_numb_of_cell = 0;
     _bulkStorage->deleteStorageCell(_numb_of_current_chunk);
 }
@@ -108,12 +108,12 @@ void BulkStorage::set_timestamp(const std::size_t &id, const std::size_t &stamp)
     if (it != _cmdStorage.cend())
         it->second->timestamp = stamp;
 }
-void ToConsolePrint::printOut(BulkReadCmd &source, const std::size_t &id)
+void ToConsolePrint::update(BulkStorage &source, const std::size_t &id)
 {
     printOstream(_out, source, id);
 }
 
-void ToFilePrint::printOut(BulkReadCmd &source, const std::size_t &id)
+void ToFilePrint::update(BulkStorage &source, const std::size_t &id)
 {
     std::ostringstream oss;
     oss << "bulk";
@@ -151,3 +151,35 @@ void BulkStorage::deleteStorageCell(const std::size_t &id)
     if (it != _cmdStorage.cend())
         _cmdStorage.erase(it);
 }
+
+void Observer::subscribe_on_observable(const std::weak_ptr<Observable> &observable)
+{
+    auto item = observable.lock();
+    if (item)
+    {
+        auto it = std::find_if(_observables.cbegin(), _observables.cend(), [&](std::weak_ptr<Observable> e) { return e.lock() == item; });
+        if (it == _observables.cend())
+        {
+            _observables.emplace_back(item);
+            item->subscribe(shared_from_this());
+        }
+        item.reset();
+    }
+}
+
+void Observer::unsubscribe_on_observable(const std::weak_ptr<Observable> &observable_ptr)
+{
+    auto observable = observable_ptr.lock();
+    if (observable)
+    {
+        _observables.erase(
+            std::remove_if(_observables.begin(), _observables.end(),
+                           [observable_ptr](const auto &p) { return !(observable_ptr.owner_before(p) || p.owner_before(observable_ptr)); }),
+            _observables.end());
+
+        observable.reset();
+    }
+}
+ Observer::Observer(const std::weak_ptr<Observable> &observable_ptr){
+     this->subscribe_on_observable(observable_ptr);
+ }
