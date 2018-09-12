@@ -8,7 +8,7 @@ endif()
 set(MY_PROJECT_NAME bulk)
 project(${MY_PROJECT_NAME})
 
-add_executable(${MY_PROJECT_NAME} main.cpp bulk.cpp)
+add_executable(${MY_PROJECT_NAME} main.cpp bulk.cpp bulk_storage.cpp)
 
 set_target_properties(${MY_PROJECT_NAME}  PROPERTIES
         CXX_STANDARD 17

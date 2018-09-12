@@ -8,49 +8,16 @@
 #include <cstddef>
 #include <map>
 #include "utils.h"
-
-class BulkReadCmd;
-
-class BulkStorageCell
-{
-private:
-  std::vector<std::string> _commands;
-
-public:
-  Property<std::size_t> timestamp{0};
-  void add(const std::string &val)
-  {
-    _commands.emplace_back(val);
-  }
-
-  std::vector<std::string> &get_cells() { return _commands; }
-};
-
-class BulkStorage
-{
-private:
-  std::map<std::size_t, std::shared_ptr<BulkStorageCell>> _cmdStorage;
-  std::vector<std::string> false_cell{};
-
-public:
-  BulkStorage() : _cmdStorage{} {};
-  std::size_t create_bulk();
-  void appendToCmdStorage(const std::size_t &, const std::string &);
-  std::vector<std::string> &get_commands(const std::size_t &);
-  std::size_t get_timestamp(const std::size_t &);
-  void set_timestamp(const std::size_t &, const std::size_t &);
-  void deleteStorageCell(const std::size_t &);
-};
+#include "bulk_storage.h"
 
 struct Observable;
+
 class Observer : public std::enable_shared_from_this<Observer>
 {
 private:
   std::vector<std::weak_ptr<Observable>> _observables;
 
 public:
-  Observer() =  default;
-  Observer(const std::weak_ptr<Observable> &);
   virtual void update(BulkStorage &source, const std::size_t &) = 0;
   void subscribe_on_observable(const std::weak_ptr<Observable> &);
   void unsubscribe_on_observable(const std::weak_ptr<Observable> &);
@@ -61,8 +28,10 @@ protected:
     if (source.get_commands(id).size())
     {
       out << "bulk: ";
-      std::copy(std::cbegin(source.get_commands(id)), std::cend(source.get_commands(id)),
-                infix_ostream_iterator<std::string>(out, ", "));
+      std::copy(std::cbegin(source.get_commands(id)), std::cend(source.get_commands(id)) - 1,
+                std::ostream_iterator<std::string>(out, ", "));
+      std::copy(std::cend(source.get_commands(id)) - 1, std::cend(source.get_commands(id)),
+                std::ostream_iterator<std::string>(out, ""));
       out << std::endl;
     }
   }
@@ -72,7 +41,18 @@ class ToConsolePrint : public Observer
 {
 public:
   ToConsolePrint(std::ostream &out) : Observer(), _out{out} {}
-  void update(BulkStorage &, const std::size_t &);
+  void update(BulkStorage &, const std::size_t &) override;
+  static std::shared_ptr<ToConsolePrint> create(std::ostream &out, const std::weak_ptr<Observable> &_obs)
+  {
+    std::shared_ptr _tmpToConsolePrint = std::make_shared<ToConsolePrint>(out);
+    auto tmpObservable = _obs.lock();
+    if (tmpObservable)
+    {
+      _tmpToConsolePrint->subscribe_on_observable(tmpObservable);
+      tmpObservable.reset();
+    }
+    return _tmpToConsolePrint;
+  }
   static std::shared_ptr<ToConsolePrint> create(std::ostream &out)
   {
     return std::make_shared<ToConsolePrint>(out);
@@ -86,11 +66,23 @@ class ToFilePrint : public Observer
 {
 public:
   ToFilePrint() : Observer() {}
-  void update(BulkStorage &, const std::size_t &id);
+  void update(BulkStorage &, const std::size_t &id) override;
 
   static std::shared_ptr<ToFilePrint> create()
   {
     return std::make_shared<ToFilePrint>();
+  }
+
+  static std::shared_ptr<ToFilePrint> create(const std::weak_ptr<Observable> &_observable)
+  {
+    std::shared_ptr _tmpToFilePrint = std::make_shared<ToFilePrint>();
+    auto tmpObservable = _observable.lock();
+    if (tmpObservable)
+    {
+      _tmpToFilePrint->subscribe_on_observable(tmpObservable);
+      tmpObservable.reset();
+    }
+    return _tmpToFilePrint;
   }
 };
 
@@ -160,8 +152,6 @@ public:
   {
     return std::make_shared<BulkReadCmd>(size);
   }
-  std::vector<std::string> &get_commands(const std::size_t &id) { return _bulkStorage->get_commands(id); }
-  std::size_t get_timestamp(const std::size_t &id) { return _bulkStorage->get_timestamp(id); }
 
 private:
   std::shared_ptr<BulkStorage> _bulkStorage{nullptr};

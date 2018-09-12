@@ -76,42 +76,13 @@ void BulkReadCmd::append(const std::string &tmp)
     }
 }
 
-std::size_t BulkStorage::create_bulk()
-{
-    using cellType = BulkStorageCell;
-    using ptr_cellType = std::shared_ptr<cellType>;
-    auto bulkCell =
-        std::make_shared<BulkStorageCell>();
-    std::size_t chunk_number = TypeID<std::size_t>::value();
-    _cmdStorage.insert(std::pair<std::size_t, ptr_cellType>(chunk_number, bulkCell));
-    return chunk_number;
-}
 
-void BulkStorage::appendToCmdStorage(const std::size_t &i, const std::string &str)
-{
-    auto it = _cmdStorage.find(i);
-    if (it != _cmdStorage.cend())
-        it->second->add(str);
-}
 
-std::size_t BulkStorage::get_timestamp(const std::size_t &id)
-{
-    auto it = _cmdStorage.find(id);
-    if (it != _cmdStorage.cend())
-        return it->second->timestamp;
-    else
-        return 0;
-}
-void BulkStorage::set_timestamp(const std::size_t &id, const std::size_t &stamp)
-{
-    auto it = _cmdStorage.find(id);
-    if (it != _cmdStorage.cend())
-        it->second->timestamp = stamp;
-}
 void ToConsolePrint::update(BulkStorage &source, const std::size_t &id)
 {
     printOstream(_out, source, id);
 }
+
 
 void ToFilePrint::update(BulkStorage &source, const std::size_t &id)
 {
@@ -135,22 +106,7 @@ void ToFilePrint::update(BulkStorage &source, const std::size_t &id)
     }
 }
 
-std::vector<std::string> &BulkStorage::get_commands(const std::size_t &id)
-{
-    auto it = _cmdStorage.find(id);
-    if (it != _cmdStorage.cend())
-        return it->second->get_cells();
-    else
-        return false_cell;
-}
 
-void BulkStorage::deleteStorageCell(const std::size_t &id)
-{
-    auto it = _cmdStorage.find(id);
-
-    if (it != _cmdStorage.cend())
-        _cmdStorage.erase(it);
-}
 
 void Observer::subscribe_on_observable(const std::weak_ptr<Observable> &observable)
 {
@@ -161,7 +117,7 @@ void Observer::subscribe_on_observable(const std::weak_ptr<Observable> &observab
         if (it == _observables.cend())
         {
             _observables.emplace_back(item);
-            item->subscribe(shared_from_this());
+            item->subscribe(this->shared_from_this());
         }
         item.reset();
     }
@@ -180,6 +136,3 @@ void Observer::unsubscribe_on_observable(const std::weak_ptr<Observable> &observ
         observable.reset();
     }
 }
- Observer::Observer(const std::weak_ptr<Observable> &observable_ptr){
-     this->subscribe_on_observable(observable_ptr);
- }

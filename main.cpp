@@ -25,8 +25,9 @@ int main(int argc, char const *argv[])
         std::size_t chunk_size = std::atoi(argv[1]);
 
         auto ptrBulkRead = BulkReadCmd::create(chunk_size);
-        auto ptrToConsolePrint = ToConsolePrint::create(std::cout);
-        auto ptrToFilePrint = ToFilePrint::create();
+        auto ptrToConsolePrint = ToConsolePrint::create(std::cout, ptrBulkRead);
+        auto ptrToFilePrint = ToFilePrint::create(ptrBulkRead);
+
         ptrBulkRead->process(std::cin);
     }
     catch (std::exception &e)

@@ -1,5 +1,6 @@
 #include "gmock/gmock.h"
 #include "bulk.cpp"
+#include "bulk_storage.cpp"
 #include <sstream>
 using namespace testing;
 class TestCommandsCollection : public Test
@@ -12,8 +13,8 @@ class TestCommandsCollection : public Test
     void SetUp() override
     {
         ptrBulkRead = BulkReadCmd::create(chunk_size);
-        ptrToConsolePrint = ToConsolePrint::create(oss);
-        ptrBulkRead->subscribe(ptrToConsolePrint);
+        ptrToConsolePrint = ToConsolePrint::create(oss, ptrBulkRead);
+        //ptrBulkRead->subscribe(ptrToConsolePrint);
     }
 };
 
@@ -35,9 +36,13 @@ TEST(Test_Bulk_Create_Case, Test_Bulk_Create)
 TEST_F(TestCommandsCollection, Test_Observer_Storage)
 {
     ptrToConsolePrint->subscribe_on_observable(ptrBulkRead);
+    ASSERT_TRUE(ptrToConsolePrint.use_count() == 1);
     ptrToConsolePrint->subscribe_on_observable(ptrBulkRead);
+    ASSERT_TRUE(ptrToConsolePrint.use_count() == 1);
+    ptrToConsolePrint->unsubscribe_on_observable(ptrBulkRead);
+     ptrToConsolePrint->unsubscribe_on_observable(ptrBulkRead);
 }
-/*
+
 TEST_F(TestCommandsCollection, Test_Bulk_Append1)
 {
     std::string testData{"cmd1\n"
@@ -268,4 +273,3 @@ TEST_F(TestCommandsCollection, Test_Bulk_Append12)
     std::cout << oss.str() << std::endl;
     ASSERT_THAT(oss.str(), resultData);
 }
-*/
