@@ -8,7 +8,7 @@ endif()
 set(MY_PROJECT_NAME bulk)
 project(${MY_PROJECT_NAME})
 
-add_executable(${MY_PROJECT_NAME} main.cpp bulk.cpp bulk_storage.cpp)
+add_executable(${MY_PROJECT_NAME} main.cpp bulk.cpp bulk_storage.cpp  bulk_observer.cpp)
 
 set_target_properties(${MY_PROJECT_NAME}  PROPERTIES
         CXX_STANDARD 17
@@ -16,7 +16,7 @@ set_target_properties(${MY_PROJECT_NAME}  PROPERTIES
         COMPILE_OPTIONS -Wpedantic -Wall -Wextra
         )
 
-set(BUILD_TEST ON)
+set(BUILD_TEST OFF)
 if(${BUILD_TEST})
 enable_testing()
 include_directories(./)

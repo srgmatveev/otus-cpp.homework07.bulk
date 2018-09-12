@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
 #include "bulk.cpp"
 #include "bulk_storage.cpp"
+#include "bulk_observer.cpp"
 #include <sstream>
 using namespace testing;
 class TestCommandsCollection : public Test
