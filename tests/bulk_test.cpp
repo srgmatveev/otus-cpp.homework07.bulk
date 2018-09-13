@@ -11,11 +11,13 @@ class TestCommandsCollection : public Test
     std::size_t chunk_size{3};
     std::shared_ptr<BulkReadCmd> ptrBulkRead;
     std::shared_ptr<ToConsolePrint> ptrToConsolePrint;
+  
     void SetUp() override
     {
         ptrBulkRead = BulkReadCmd::create(chunk_size);
         ptrToConsolePrint = ToConsolePrint::create(oss, ptrBulkRead);
-        //ptrBulkRead->subscribe(ptrToConsolePrint);
+       // ptrBulkRead->subscribe(ptrToConsolePrint);
+
     }
 };
 

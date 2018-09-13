@@ -2,7 +2,6 @@
 #include <cstddef>
 #include <memory>
 #include <exception>
-#include "bulk_storage.h"
 #include "bulk.h"
 #include "bulk_observer.h"
 #include "utils.h"
