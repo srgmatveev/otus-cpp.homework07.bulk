@@ -24,7 +24,7 @@ std::size_t BulkStorage::get_timestamp(std::size_t id)
 {
     auto it = _cmdStorage.find(id);
     if (it != _cmdStorage.cend())
-        return it->second->get_timestamp();
+        return it->second->timestamp;
     else
         return 0;
 }
@@ -32,7 +32,7 @@ void BulkStorage::set_timestamp(std::size_t id, std::size_t stamp)
 {
     auto it = _cmdStorage.find(id);
     if (it != _cmdStorage.cend())
-        it->second->set_timestamp(stamp);
+        it->second->timestamp = stamp;
 }
 
 std::vector<std::string> &BulkStorage::get_commands(std::size_t id)

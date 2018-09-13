@@ -12,16 +12,13 @@ class BulkStorageCell
 {
 private:
   std::vector<std::string> _commands;
-  std::size_t timestamp{0};
 
 public:
+  Property<std::size_t> timestamp{0};
   void add(const std::string &val)
   {
     _commands.emplace_back(val);
   }
-
-  void set_timestamp(std::size_t ts) { timestamp = ts; }
-  std::size_t get_timestamp() const { return timestamp; }
 
   std::vector<std::string> &get_cells() { return _commands; }
 };

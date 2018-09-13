@@ -45,3 +45,25 @@ class TypeID
 
 template <class T>
 std::size_t TypeID<T>::counter = 0;
+
+template <typename T>
+struct Property
+{
+  private:
+    T value;
+  public:
+    Property(const T initial_value)
+    {
+        *this = initial_value;
+    }
+    operator T()
+    {
+        // perform some getter action
+        return value;
+    }
+    T operator=(T new_value)
+    {
+        // perform some setter action
+        return value = new_value;
+    }
+};
