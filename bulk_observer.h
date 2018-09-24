@@ -17,6 +17,7 @@ public:
   virtual void update(BulkStorage &source, std::size_t) = 0;
   void subscribe_on_observable(const std::weak_ptr<Observable> &);
   void unsubscribe_on_observable(const std::weak_ptr<Observable> &);
+  virtual ~Observer(){};
 
 protected:
   virtual void printOstream(std::ostream &out, BulkStorage &source, std::size_t id)

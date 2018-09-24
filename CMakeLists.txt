@@ -16,7 +16,7 @@ set_target_properties(${MY_PROJECT_NAME}  PROPERTIES
         COMPILE_OPTIONS -Wpedantic -Wall -Wextra
         )
 
-set(BUILD_TEST OFF)
+set(BUILD_TEST ON)
 if(${BUILD_TEST})
 enable_testing()
 include_directories(./)
